@@ -29,17 +29,10 @@ class ViewController: UIViewController {
     @IBOutlet weak var sendButton: UIButton!
     @IBOutlet weak var requestIndicator: UIActivityIndicatorView!
     
-//    let CharacterLimit = 30
     let requestState = Observable<RequestState>(.None)
-//    var requestState: RequestState = .None {
-//        didSet {
-//            updateRequestIndicator()
-//        }
-//    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        setupUI()
         bindUI()
     }
 
@@ -53,7 +46,8 @@ extension ViewController {
     func bindUI() {
         
         let CharacterLimit = 30
-        //
+        
+        //sendButtonのステータス
         combineLatest(destinationTextField.bnd_text, subjectTextField.bnd_text, messageTextView.bnd_text, requestState).map { (destination, subject, message, reqState) -> (isEnabled: Bool, alpha: CGFloat) in
             
             let disableState: (Bool, CGFloat) = (false, 0.5)
@@ -75,7 +69,7 @@ extension ViewController {
             self.sendButton.alpha = alpha
         }
         
-        //
+        //characterLimitLabelのステータス
         messageTextView.bnd_text.map { message -> (count: String, color: UIColor) in
             
             let messageCount = message?.characters.count ?? 0
@@ -92,26 +86,31 @@ extension ViewController {
             
         }
         
+        //requestIndicatorのアニメーション
         requestState.map { reqState -> Bool in
             return reqState == .Requesting
         }.bindTo(requestIndicator.bnd_animating)
         
+        //requestIndicatorのhidden状態
         requestState.map { reqState -> Bool in
             return reqState != .Requesting
         }.bindTo(requestIndicator.bnd_hidden)
         
+        //requestStateがSuccessの時
         requestState.filter { reqState -> Bool in
             return reqState == .Success
         }.observe { [unowned self] _ -> Void in
             self.finishSendMessage("送信成功しました")
         }
         
+        //requestStateがErrorの時
         requestState.filter { reqState -> Bool in
             return reqState == .Error
         }.observe { [unowned self] _ -> Void in
             self.finishSendMessage("送信失敗しました")
         }
         
+        //sendButtonがタップされた時
         sendButton.bnd_tap.observe { [unowned self] _ -> Void in
             
             self.requestState.next(.Requesting)
